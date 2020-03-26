@@ -157,7 +157,7 @@ async def blue_assistant(baseRequest: AlexaRequest):
         return text_response("Hi, welcome to Blue, your personal lab assistant. How may I help you today?")
     elif baseRequest.request.get("type") == "SessionEndedRequest":
         return text_response("")
-    #print(baseRequest.request)
+    print(baseRequest.request)
     intents = baseRequest.request.get("intent")
     specific_intent = intents.get("name")
     if specific_intent == "AMAZON.PauseIntent":
@@ -166,6 +166,11 @@ async def blue_assistant(baseRequest: AlexaRequest):
     elif specific_intent == "AMAZON.ResumeIntent":
         await video_control_intent("Resume")
         return text_response("")
+    elif specific_intent == "AMAZON.FallbackIntent":
+        response = deepcopy(json_response_template)
+        response["response"]["outputSpeech"]["text"] = ""
+        response["response"]["repromt"] = {"outputSpeech":""}
+        return response
     elif specific_intent == "StopVideoIntent":
         await video_control_intent("Stop")
         return text_response("")
@@ -204,6 +209,8 @@ def company_info_intent(company, sector):
     with open("companyInfo.json", "r") as file:
         f = json.load(file)
         companyInfo = f.get(company)
+    if companyInfo is None:
+        return text_response("Sorry I could not recognise that company, please try again")
     if sector is None:
         response["response"]["outputSpeech"]["text"] = companyInfo.get("about")[0]
     elif sector in companyInfo.keys():
